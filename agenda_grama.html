@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Agendamento de Cargas na Nuvem</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #e0f2fe;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 1rem auto;
+            padding: 1rem;
+            background-color: #ffffff;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .section-heading {
+            border-bottom: 2px solid #e2e8f0;
+        }
+        .page-content {
+            display: none;
+        }
+        .page-content.active {
+            display: block;
+        }
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background-color: #ffffff;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            width: 90%;
+            max-width: 500px;
+            position: relative;
+        }
+    </style>
+</head>
+<body class="bg-sky-100 min-h-screen p-2 sm:p-4 flex items-center justify-center">
+    <div class="container w-full max-w-7xl mx-auto">
+        <!-- Logo -->
+        <div class="text-center mb-4">
+            <img src="Logo-King-Grass.png" alt="Logo da Empresa King Grass" class="mx-auto w-48 h-auto">
+        </div>
+
+        <h1 class="text-3xl sm:text-4xl font-extrabold text-center text-gray-800 mb-4">
+            Sistema de Agendamento de Cargas
+        </h1>
+        <p id="user-info" class="text-center text-sm text-gray-500 mb-4">Carregando...</p>
+        
+        <!-- Navigation Menu -->
+        <div class="flex justify-center space-x-2 sm:space-x-4 mb-6">
+            <button id="show-agenda-btn" class="py-2 px-4 sm:px-6 rounded-full text-sm sm:text-base font-bold text-white bg-sky-600 hover:bg-sky-700 transition duration-200 ease-in-out shadow-lg">
+                Agenda de Cargas
+            </button>
+            <button id="show-drivers-btn" class="py-2 px-4 sm:px-6 rounded-full text-sm sm:text-base font-bold text-white bg-green-600 hover:bg-green-700 transition duration-200 ease-in-out shadow-lg">
+                Contatos
+            </button>
+        </div>
+
+        <!-- Main Content Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Agenda Page (main content) -->
+            <div id="agenda-page" class="page-content active md:col-span-2">
+                <!-- Formulário de Agendamento -->
+                <div class="bg-gray-50 p-4 rounded-xl mb-6 shadow-inner">
+                    <h2 class="text-xl sm:text-2xl font-bold text-gray-700 mb-4 section-heading pb-2">Novo Agendamento</h2>
+                    <form id="appointment-form" class="space-y-4">
+                        <div class="flex flex-col sm:flex-row gap-4">
+                            <div class="w-full sm:w-1/4">
+                                <label for="appointment-date" class="block text-xs sm:text-sm font-medium text-gray-700">Data:</label>
+                                <input type="date" id="appointment-date" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring focus:ring-sky-200 focus:ring-opacity-50 transition duration-150 ease-in-out p-2.5">
+                            </div>
+                            <div class="w-full sm:w-3/4">
+                                <label for="client-name" class="block text-xs sm:text-sm font-medium text-gray-700">Nome do Cliente:</label>
+                                <input type="text" id="client-name" required placeholder="Ex: João da Silva" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring focus:ring-sky-200 focus:ring-opacity-50 transition duration-150 ease-in-out p-2.5">
+                            </div>
+                        </div>
+                        <div>
+                            <label for="client-phone" class="block text-xs sm:text-sm font-medium text-gray-700">Telefone do Cliente:</label>
+                            <input type="text" id="client-phone" placeholder="(XX) XXXXX-XXXX" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring focus:ring-sky-200 focus:ring-opacity-50 transition duration-150 ease-in-out p-2.5">
+                        </div>
+                        <div class="flex flex-col sm:flex-row gap-4">
+                            <div class="w-full sm:w-1/2">
+                                <label for="grass-type" class="block text-xs sm:text-sm font-medium text-gray-700">Tipo da Grama:</label>
+                                <select id="grass-type" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring focus:ring-sky-200 focus:ring-opacity-50 transition duration-150 ease-in-out p-2.5">
+                                    <option value="">Selecione o tipo de grama</option>
+                                    <option value="Grama Esmeralda">Grama Esmeralda</option>
+                                    <option value="Grama São Carlos">Grama São Carlos</option>
+                                    <option value="Grama Tiffway 419">Grama Tiffway 419</option>
+                                    <option value="Retalho de Grama Esmeralda">Retalho de Grama Esmeralda</option>
+                                </select>
+                            </div>
+                            <div class="w-full sm:w-1/2">
+                                <label for="quantity" class="block text-xs sm:text-sm font-medium text-gray-700">Quantidade:</label>
+                                <input type="text" id="quantity" required placeholder="Ex: 50" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring focus:ring-sky-200 focus:ring-opacity-50 transition duration-150 ease-in-out p-2.5">
+                                <p class="mt-1 text-xs text-gray-500">Por favor, insira apenas o número. A unidade "m²" será adicionada automaticamente.</p>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="delivery-location" class="block text-xs sm:text-sm font-medium text-gray-700">Local de Entrega:</label>
+                            <input type="text" id="delivery-location" required placeholder="Endereço completo" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring focus:ring-sky-200 focus:ring-opacity-50 transition duration-150 ease-in-out p-2.5">
+                        </div>
+                        <div>
+                            <label for="driver-name" class="block text-xs sm:text-sm font-medium text-gray-700">Motorista:</label>
+                            <select id="driver-name" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring focus:ring-sky-200 focus:ring-opacity-50 transition duration-150 ease-in-out p-2.5">
+                                <option value="">Selecione o motorista</option>
+                            </select>
+                        </div>
+                        <div class="flex items-center">
+                            <input type="checkbox" id="is-palletized" class="h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500">
+                            <label for="is-palletized" class="ml-2 block text-sm font-medium text-gray-700">Carga Paletizada</label>
+                        </div>
+                        <div>
+                            <label for="observations" class="block text-xs sm:text-sm font-medium text-gray-700">Observações:</label>
+                            <textarea id="observations" rows="3" placeholder="Informações adicionais sobre o agendamento" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring focus:ring-sky-200 focus:ring-opacity-50 transition duration-150 ease-in-out p-2.5"></textarea>
+                        </div>
+                        <button type="submit" class="w-full flex justify-center py-2 sm:py-3 px-4 border border-transparent rounded-md shadow-sm text-sm sm:text-lg font-medium text-white bg-sky-600 hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition duration-200 ease-in-out transform hover:scale-105">
+                            Adicionar Agendamento
+                        </button>
+                    </form>
+                </div>
+                
+                <!-- Filtro e Lista de Agendamentos -->
+                <div class="bg-gray-50 p-4 rounded-xl shadow-inner">
+                    <h2 class="text-xl sm:text-2xl font-bold text-gray-700 mb-4 section-heading pb-2">Agendamentos</h2>
+                    <div class="mb-4 flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-4">
+                        <label for="filter-date" class="text-xs sm:text-sm font-medium text-gray-700">Filtrar por data:</label>
+                        <input type="date" id="filter-date" class="flex-grow rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring focus:ring-sky-200 focus:ring-opacity-50 p-2.5">
+                        <button id="filter-btn" class="flex-shrink-0 w-full sm:w-auto py-2 px-4 rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-200 ease-in-out">
+                            Filtrar
+                        </button>
+                        <button id="clear-filter-btn" class="flex-shrink-0 w-full sm:w-auto py-2 px-4 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-gray-200 hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 transition duration-200 ease-in-out">
+                            Limpar Filtro
+                        </button>
+                    </div>
+                    
+                    <div id="total-quantity" class="text-base sm:text-lg font-bold text-gray-800 mb-4 text-center"></div>
+                    <div id="appointments-list" class="space-y-4">
+                        <!-- Os agendamentos serão renderizados aqui pelo JavaScript -->
+                        <p class="text-center text-gray-500 italic">Carregando agendamentos...</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Daily Appointments Section -->
+            <div id="daily-appointments" class="md:col-span-1">
+                <div class="bg-sky-50 p-4 rounded-xl shadow-inner sticky top-4">
+                    <h2 class="text-xl sm:text-2xl font-bold text-sky-700 mb-4 section-heading pb-2">
+                        Agendamentos de Hoje
+                    </h2>
+                    <div id="today-total-quantity" class="text-base sm:text-lg font-bold text-sky-800 mb-4 text-center"></div>
+                    <div id="today-appointments-list" class="space-y-4">
+                        <!-- Agendamentos de hoje serão renderizados aqui -->
+                        <p class="text-center text-gray-500 italic">Carregando agendamentos de hoje...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Drivers Page -->
+        <div id="drivers-page" class="page-content">
+            <h2 class="text-xl sm:text-2xl font-bold text-gray-700 mb-4 section-heading pb-2">Contatos (Motoristas Cadastrados)</h2>
+            <div class="mb-4">
+                <button id="show-add-driver-modal-btn" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition duration-200 ease-in-out">
+                    Cadastrar Novo Motorista
+                </button>
+            </div>
+            
+            <div class="bg-gray-50 p-4 rounded-xl shadow-inner">
+                <div id="drivers-list" class="space-y-4">
+                    <!-- A lista de motoristas será renderizada aqui -->
+                    <p class="text-center text-gray-500 italic">Carregando contatos...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Cadastro de Motorista -->
+    <div id="driver-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button id="close-modal-btn" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition duration-200 ease-in-out">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+            <h2 class="text-xl sm:text-2xl font-bold text-gray-700 mb-4 section-heading pb-2">Cadastrar Novo Motorista</h2>
+            <form id="driver-form" class="space-y-4 mb-4">
+                <div>
+                    <label for="driver-name-reg" class="block text-sm font-medium text-gray-700">Nome:</label>
+                    <input type="text" id="driver-name-reg" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2.5" placeholder="Nome do motorista">
+                </div>
+                <div>
+                    <label for="driver-phone" class="block text-sm font-medium text-gray-700">Telefone:</label>
+                    <input type="text" id="driver-phone" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2.5" placeholder="(XX) XXXXX-XXXX">
+                </div>
+                <div>
+                    <label for="driver-pix" class="block text-sm font-medium text-gray-700">Chave Pix:</label>
+                    <input type="text" id="driver-pix" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2.5" placeholder="Chave Pix do motorista">
+                </div>
+                <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition duration-200 ease-in-out">
+                    Cadastrar Motorista
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Novo Modal para Edição de Agendamento -->
+    <div id="edit-appointment-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button id="close-edit-modal-btn" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition duration-200 ease-in-out">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+            <h2 class="text-xl sm:text-2xl font-bold text-gray-700 mb-4 section-heading pb-2">Editar Agendamento</h2>
+            <form id="edit-appointment-form" class="space-y-4">
+                <input type="hidden" id="edit-appointment-id">
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <div class="w-full sm:w-1/4">
+                        <label for="edit-appointment-date" class="block text-xs sm:text-sm font-medium text-gray-700">Data:</label>
+                        <input type="date" id="edit-appointment-date" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring focus:ring-sky-200 focus:ring-opacity-50 transition duration-150 ease-in-out p-2.5">
+                    </div>
+                    <div class="w-full sm:w-3/4">
+                        <label for="edit-client-name" class="block text-xs sm:text-sm font-medium text-gray-700">Nome do Cliente:</label>
+                        <input type="text" id="edit-client-name" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring focus:ring-sky-200 focus:ring-opacity-50 transition duration-150 ease-in-out p-2.5">
+                    </div>
+                </div>
+                <div>
+                    <label for="edit-client-phone" class="block text-xs sm:text-sm font-medium text-gray-700">Telefone do Cliente:</label>
+                    <input type="text" id="edit-client-phone" placeholder="(XX) XXXXX-XXXX" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring focus:ring-sky-200 focus:ring-opacity-50 transition duration-150 ease-in-out p-2.5">
+                </div>
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <div class="w-full sm:w-1/2">
+                        <label for="edit-grass-type" class="block text-xs sm:text-sm font-medium text-gray-700">Tipo da Grama:</label>
+                        <select id="edit-grass-type" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring focus:ring-sky-200 focus:ring-opacity-50 transition duration-150 ease-in-out p-2.5">
+                            <option value="">Selecione o tipo de grama</option>
+                            <option value="Grama Esmeralda">Grama Esmeralda</option>
+                            <option value="Grama São Carlos">Grama São Carlos</option>
+                            <option value="Grama Tiffway 419">Grama Tiffway 419</option>
+                            <option value="Retalho de Grama Esmeralda">Retalho de Grama Esmeralda</option>
+                        </select>
+                    </div>
+                    <div class="w-full sm:w-1/2">
+                        <label for="edit-quantity" class="block text-xs sm:text-sm font-medium text-gray-700">Quantidade:</label>
+                        <input type="text" id="edit-quantity" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring focus:ring-sky-200 focus:ring-opacity-50 transition duration-150 ease-in-out p-2.5">
+                        <p class="mt-1 text-xs text-gray-500">Por favor, insira apenas o número. A unidade "m²" será adicionada automaticamente.</p>
+                    </div>
+                </div>
+                <div>
+                    <label for="edit-delivery-location" class="block text-xs sm:text-sm font-medium text-gray-700">Local de Entrega:</label>
+                    <input type="text" id="edit-delivery-location" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring focus:ring-sky-200 focus:ring-opacity-50 transition duration-150 ease-in-out p-2.5">
+                </div>
+                <div>
+                    <label for="edit-driver-name" class="block text-xs sm:text-sm font-medium text-gray-700">Motorista:</label>
+                    <select id="edit-driver-name" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring focus:ring-sky-200 focus:ring-opacity-50 transition duration-150 ease-in-out p-2.5">
+                        <option value="">Selecione o motorista</option>
+                    </select>
+                </div>
+                <div class="flex items-center">
+                    <input type="checkbox" id="edit-is-palletized" class="h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500">
+                    <label for="edit-is-palletized" class="ml-2 block text-sm font-medium text-gray-700">Carga Paletizada</label>
+                </div>
+                <div>
+                    <label for="edit-observations" class="block text-xs sm:text-sm font-medium text-gray-700">Observações:</label>
+                    <textarea id="edit-observations" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring focus:ring-sky-200 focus:ring-opacity-50 transition duration-150 ease-in-out p-2.5"></textarea>
+                </div>
+                <button type="submit" class="w-full flex justify-center py-2 sm:py-3 px-4 border border-transparent rounded-md shadow-sm text-sm sm:text-lg font-medium text-white bg-sky-600 hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition duration-200 ease-in-out transform hover:scale-105">
+                    Salvar Alterações
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, getDocs, orderBy, startAt, endAt } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        
+        // Firebase global variables provided by the environment
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        // --- Firebase Initialization ---
+        let app, db, auth, userId;
+        const appInfo = document.getElementById('user-info');
+        
+        async function initFirebaseAndAuth() {
+            try {
+                if (Object.keys(firebaseConfig).length > 0) {
+                    app = initializeApp(firebaseConfig);
+                    db = getFirestore(app);
+                    auth = getAuth(app);
+                    if (initialAuthToken) {
+                        await signInWithCustomToken(auth, initialAuthToken);
+                        console.log("Signed in with custom token.");
+                    } else {
+                        await signInAnonymously(auth);
+                        console.log("Signed in anonymously.");
+                    }
+                    userId = auth.currentUser?.uid || crypto.randomUUID();
+                    appInfo.textContent = `ID do Usuário: ${userId}`;
+                    
+                    // Start listening to data after authentication
+                    setupFirestoreListeners();
+                } else {
+                    appInfo.textContent = "Erro: Configuração do Firebase ausente.";
+                    console.error("Firebase config is missing.");
+                }
+            } catch (error) {
+                appInfo.textContent = "Erro de autenticação. Por favor, recarregue.";
+                console.error("Authentication error:", error);
+            }
+        }
+        
+        // --- Firestore Collection Paths ---
+        const appointmentsCollection = (appId) => collection(db, `artifacts/${appId}/public/data/appointments`);
+        const driversCollection = (appId) => collection(db, `artifacts/${appId}/public/data/drivers`);
+
+        // --- Page State and Elements ---
+        const appointmentForm = document.getElementById('appointment-form');
+        const driverForm = document.getElementById('driver-form');
+        const appointmentsList = document.getElementById('appointments-list');
+        const driversList = document.getElementById('drivers-list');
+        const filterDateInput = document.getElementById('filter-date');
+        const filterBtn = document.getElementById('filter-btn');
+        const clearFilterBtn = document.getElementById('clear-filter-btn');
+        const totalQuantityDisplay = document.getElementById('total-quantity');
+        const todayAppointmentsList = document.getElementById('today-appointments-list');
+        const todayTotalQuantityDisplay = document.getElementById('today-total-quantity');
+        const showAgendaBtn = document.getElementById('show-agenda-btn');
+        const showDriversBtn = document.getElementById('show-drivers-btn');
+        const agendaPage = document.getElementById('agenda-page');
+        const driversPage = document.getElementById('drivers-page');
+        const driverModal = document.getElementById('driver-modal');
+        const showAddDriverModalBtn = document.getElementById('show-add-driver-modal-btn');
+        const closeModalBtn = document.getElementById('close-modal-btn');
+        const editAppointmentModal = document.getElementById('edit-appointment-modal');
+        const closeEditModalBtn = document.getElementById('close-edit-modal-btn');
+        const editAppointmentForm = document.getElementById('edit-appointment-form');
+        const editAppointmentIdInput = document.getElementById('edit-appointment-id');
+        const editClientNameInput = document.getElementById('edit-client-name');
+        const editClientPhoneInput = document.getElementById('edit-client-phone');
+        const editAppointmentDateInput = document.getElementById('edit-appointment-date');
+        const editGrassTypeSelect = document.getElementById('edit-grass-type');
+        const editQuantityInput = document.getElementById('edit-quantity');
+        const editDeliveryLocationInput = document.getElementById('edit-delivery-location');
+        const editDriverNameSelect = document.getElementById('edit-driver-name');
+        const editIsPalletizedInput = document.getElementById('edit-is-palletized');
+        const editObservationsInput = document.getElementById('edit-observations');
+
+        // --- Data Handling ---
+        let allAppointments = [];
+        let allDrivers = [];
+
+        function getFormattedToday() {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+        
+        // --- Firestore Listeners ---
+        function setupFirestoreListeners() {
+            // Listen for changes to the appointments collection
+            onSnapshot(appointmentsCollection(appId), (snapshot) => {
+                const appointments = {};
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const date = data.date;
+                    if (!appointments[date]) {
+                        appointments[date] = [];
+                    }
+                    appointments[date].push({ id: doc.id, ...data });
+                });
+                allAppointments = appointments;
+                renderAppointments();
+                renderTodayAppointments();
+            }, (error) => {
+                console.error("Error fetching appointments:", error);
+            });
+
+            // Listen for changes to the drivers collection
+            onSnapshot(driversCollection(appId), (snapshot) => {
+                const drivers = [];
+                snapshot.forEach(doc => {
+                    drivers.push({ id: doc.id, ...doc.data() });
+                });
+                allDrivers = drivers;
+                populateDriverSelect();
+                renderDrivers();
+            }, (error) => {
+                console.error("Error fetching drivers:", error);
+            });
+        }
+        
+        // --- Functions for Rendering and UI ---
+        function showPage(pageName) {
+            document.querySelectorAll('.page-content').forEach(page => {
+                page.classList.remove('active');
+            });
+            document.getElementById(pageName).classList.add('active');
+        }
+
+        function showModal(modal) {
+            modal.style.display = 'flex';
+        }
+
+        function hideModal(modal) {
+            modal.style.display = 'none';
+        }
+
+        function calculateTotalQuantity(date, displayElement) {
+            let total = 0;
+            if (allAppointments[date]) {
+                allAppointments[date].forEach(app => {
+                    const quantityNum = parseInt(app.quantity, 10);
+                    if (!isNaN(quantityNum)) {
+                        total += quantityNum;
+                    }
+                });
+            }
+            displayElement.innerHTML = `<span class="text-sky-700">Total:</span> <span class="text-xl font-extrabold">${total} m²</span>`;
+        }
+
+        function renderTodayAppointments() {
+            const today = getFormattedToday();
+            todayAppointmentsList.innerHTML = '';
+            todayTotalQuantityDisplay.innerHTML = '';
+            
+            const appointmentsForToday = allAppointments[today] || [];
+            if (appointmentsForToday.length === 0) {
+                todayAppointmentsList.innerHTML = `<p class="text-center text-gray-500 italic">Nenhum agendamento para hoje.</p>`;
+            } else {
+                appointmentsForToday.forEach(app => {
+                    const item = document.createElement('div');
+                    item.className = 'p-3 rounded-lg bg-white border border-gray-200 shadow-sm text-sm space-y-1';
+                    const isPalletizedText = app.isPalletized ? 'Sim' : 'Não';
+                    const observationsHtml = app.observations ? `<p><strong class="text-gray-800">Obs:</strong> ${app.observations}</p>` : '';
+                    
+                    const clientNameHtml = app.clientPhone ? `<a href="https://wa.me/55${app.clientPhone.replace(/\D/g, '')}" target="_blank" class="text-blue-600 hover:text-blue-800 flex items-center group"><strong class="text-gray-800">Cliente:</strong> ${app.clientName} <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1 text-green-500 group-hover:text-green-600 transition-colors duration-200" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C7.94 2 4.54 5.39 4.54 9.49c0 1.54.49 3 1.35 4.31L4.17 19.83l4.79-1.26c1.23.68 2.65 1.05 4.1.99 4.09 0 7.49-3.4 7.49-7.49 0-4.09-3.4-7.49-7.49-7.49zm2.4 12.87c-.12.2-.28.37-.48.47s-.42.15-.65.15c-.17 0-.34-.03-.5-.07-.15-.05-.29-.12-.42-.23-.13-.1-.23-.23-.32-.38s-.16-.31-.22-.49c-.06-.18-.08-.37-.08-.57 0-.17.03-.33.08-.49s.13-.3.23-.42c.1-.13.23-.24.38-.32.15-.09.31-.16.49-.22.18-.06.37-.08.57-.08h.08c.2 0 .4.04.59.13.19.09.37.21.51.36.15.15.27.32.36.51.09.19.13.4.13.59s-.04.4-.13.59c-.09.19-.21.37-.36.51s-.32.27-.51.36-.4.13-.59.13c-.2 0-.4-.04-.59-.13-.19-.09-.37-.21-.51-.36l-.36-.36z" /></svg></a>` : `<p><strong class="text-gray-800">Cliente:</strong> ${app.clientName}</p>`;
+
+                    item.innerHTML = `
+                        ${clientNameHtml}
+                        <p><strong class="text-gray-800">Tipo:</strong> ${app.grassType}</p>
+                        <p><strong class="text-gray-800">Qtd:</strong> ${app.quantity} m²</p>
+                        <p><strong class="text-gray-800">Motorista:</strong> ${app.driverName}</p>
+                        ${observationsHtml}
+                    `;
+                    todayAppointmentsList.appendChild(item);
+                });
+            }
+            calculateTotalQuantity(today, todayTotalQuantityDisplay);
+        }
+
+        function renderAppointments(filterDate = null) {
+            appointmentsList.innerHTML = '';
+            totalQuantityDisplay.innerHTML = '';
+
+            const dates = Object.keys(allAppointments);
+            const sortedDates = dates.sort();
+
+            if (filterDate) {
+                const dateBlock = document.createElement('div');
+                dateBlock.className = 'border border-gray-200 rounded-lg p-4 bg-white shadow-sm';
+                const formattedDate = new Date(filterDate + 'T00:00:00').toLocaleDateString('pt-BR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                });
+                dateBlock.innerHTML = `<h3 class="text-xl font-semibold text-gray-800 mb-4 border-b pb-2">Agendamentos para ${formattedDate}</h3><div class="space-y-4"></div>`;
+                const container = dateBlock.querySelector('div');
+                
+                const appointmentsForDate = allAppointments[filterDate] || [];
+                if (appointmentsForDate.length === 0) {
+                    container.innerHTML = `<p class="text-center text-gray-500 italic">Nenhum agendamento para esta data.</p>`;
+                } else {
+                    appointmentsForDate.forEach(app => {
+                        container.appendChild(createAppointmentItem(app));
+                    });
+                }
+                appointmentsList.appendChild(dateBlock);
+                calculateTotalQuantity(filterDate, totalQuantityDisplay);
+            } else {
+                if (sortedDates.length === 0) {
+                    appointmentsList.innerHTML = '<p class="text-center text-gray-500 italic">Nenhum agendamento encontrado.</p>';
+                    return;
+                }
+
+                sortedDates.forEach(date => {
+                    const dateBlock = document.createElement('div');
+                    dateBlock.className = 'border border-gray-200 rounded-lg p-4 bg-white shadow-sm';
+                    const formattedDate = new Date(date + 'T00:00:00').toLocaleDateString('pt-BR', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric'
+                    });
+                    dateBlock.innerHTML = `<h3 class="text-xl font-semibold text-gray-800 mb-4 border-b pb-2">Agendamentos para ${formattedDate}</h3><div class="space-y-4"></div>`;
+                    const container = dateBlock.querySelector('div');
+                    
+                    const appointmentsForDate = allAppointments[date] || [];
+                    appointmentsForDate.forEach(app => {
+                        container.appendChild(createAppointmentItem(app));
+                    });
+                    appointmentsList.appendChild(dateBlock);
+                });
+            }
+        }
+        
+        function createAppointmentItem(appointment) {
+            const appointmentItem = document.createElement('div');
+            appointmentItem.className = 'appointment-item p-4 rounded-lg bg-gray-100 flex justify-between items-center transition duration-150 ease-in-out transform hover:bg-gray-200 hover:scale-[1.01]';
+            const isPalletizedText = appointment.isPalletized ? 'Sim' : 'Não';
+            const observationsHtml = appointment.observations ? `<p><strong class="text-gray-800">Observações:</strong> ${appointment.observations}</p>` : '';
+            
+            const clientNameHtml = appointment.clientPhone ? `<a href="https://wa.me/55${appointment.clientPhone.replace(/\D/g, '')}" target="_blank" class="text-blue-600 hover:text-blue-800 flex items-center group"><strong class="text-gray-800">Cliente:</strong> ${appointment.clientName} <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1 text-green-500 group-hover:text-green-600 transition-colors duration-200" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C7.94 2 4.54 5.39 4.54 9.49c0 1.54.49 3 1.35 4.31L4.17 19.83l4.79-1.26c1.23.68 2.65 1.05 4.1.99 4.09 0 7.49-3.4 7.49-7.49 0-4.09-3.4-7.49-7.49-7.49zm2.4 12.87c-.12.2-.28.37-.48.47s-.42.15-.65.15c-.17 0-.34-.03-.5-.07-.15-.05-.29-.12-.42-.23-.13-.1-.23-.23-.32-.38s-.16-.31-.22-.49c-.06-.18-.08-.37-.08-.57 0-.17.03-.33.08-.49s.13-.3.23-.42c.1-.13.23-.24.38-.32.15-.09.31-.16.49-.22.18-.06.37-.08.57-.08h.08c.2 0 .4.04.59.13.19.09.37.21.51.36.15.15.27.32.36.51.09.19.13.4.13.59s-.04.4-.13.59c-.09.19-.21.37-.36.51s-.32.27-.51.36-.4.13-.59.13c-.2 0-.4-.04-.59-.13-.19-.09-.37-.21-.51-.36l-.36-.36z" /></svg></a>` : `<p><strong class="text-gray-800">Cliente:</strong> ${appointment.clientName}</p>`;
+            const clientPhoneHtml = appointment.clientPhone ? `<p><strong class="text-gray-800">Telefone:</strong> ${appointment.clientPhone}</p>` : '';
+            
+            appointmentItem.innerHTML = `
+                <div class="flex-grow space-y-1 text-sm text-gray-600">
+                    ${clientNameHtml}
+                    ${clientPhoneHtml}
+                    <p><strong class="text-gray-800">Data:</strong> ${new Date(appointment.date + 'T00:00:00').toLocaleDateString('pt-BR')}</p>
+                    <p><strong class="text-gray-800">Tipo da Grama:</strong> ${appointment.grassType}</p>
+                    <p><strong class="text-gray-800">Quantidade:</strong> ${appointment.quantity} m²</p>
+                    <p><strong class="text-gray-800">Local de Entrega:</strong> ${appointment.deliveryLocation}</p>
+                    <p><strong class="text-gray-800">Motorista:</strong> ${appointment.driverName}</p>
+                    <p><strong class="text-gray-800">Carga Paletizada:</strong> ${isPalletizedText}</p>
+                    ${observationsHtml}
+                </div>
+                <div class="flex flex-col space-y-2 ml-4">
+                    <button class="edit-btn bg-yellow-500 text-white p-2 rounded-full shadow hover:bg-yellow-600 transition duration-200 ease-in-out" data-id="${appointment.id}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M13.586 3.586a2 2 0 112.828 2.828l-7.293 7.293-2.586.293.293-2.586 7.293-7.293zM14 8l3-3 2 2-3 3-2-2zM5 14a2 2 0 012-2h4a2 2 0 012 2v2a2 2 0 01-2 2H7a2 2 0 01-2-2v-2z" />
+                        </svg>
+                    </button>
+                    <button class="delete-btn bg-red-500 text-white p-2 rounded-full shadow hover:bg-red-600 transition duration-200 ease-in-out" data-id="${appointment.id}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                          <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm6 0a1 1 0 011 1v5a1 1 0 11-2 0V9a1 1 0 011-1z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                </div>
+            `;
+            return appointmentItem;
+        }
+
+        function populateDriverSelect() {
+            const driverSelect = document.getElementById('driver-name');
+            const editDriverSelect = document.getElementById('edit-driver-name');
+            
+            driverSelect.innerHTML = '<option value="">Selecione o motorista</option>';
+            editDriverSelect.innerHTML = '<option value="">Selecione o motorista</option>';
+
+            allDrivers.forEach(driver => {
+                const option = document.createElement('option');
+                option.value = driver.name;
+                option.textContent = driver.name;
+                driverSelect.appendChild(option);
+
+                const editOption = document.createElement('option');
+                editOption.value = driver.name;
+                editOption.textContent = driver.name;
+                editDriverSelect.appendChild(editOption);
+            });
+        }
+
+        function renderDrivers() {
+            driversList.innerHTML = '';
+            if (allDrivers.length === 0) {
+                driversList.innerHTML = '<p class="text-center text-gray-500 italic">Nenhum motorista cadastrado.</p>';
+                return;
+            }
+            allDrivers.forEach(driver => {
+                const driverItem = document.createElement('div');
+                driverItem.className = 'p-3 rounded-md bg-white border border-gray-200 flex justify-between items-center shadow-sm text-sm';
+                
+                const cleanPhoneNumber = driver.phone.replace(/\D/g, '');
+                const whatsappLink = `https://wa.me/55${cleanPhoneNumber}`;
+
+                driverItem.innerHTML = `
+                    <div class="flex-grow space-y-1">
+                        <p><strong class="text-gray-800">Nome:</strong> ${driver.name}</p>
+                        <p><strong class="text-gray-800">Telefone:</strong> ${driver.phone}</p>
+                        <p><strong class="text-gray-800">Chave Pix:</strong> ${driver.pix}</p>
+                    </div>
+                    <div class="flex flex-col space-y-2 ml-4">
+                       <a href="${whatsappLink}" target="_blank" class="whatsapp-btn bg-green-500 text-white p-2 rounded-full shadow hover:bg-green-600 transition duration-200 ease-in-out">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12.04 2C7.94 2 4.54 5.39 4.54 9.49c0 1.54.49 3 1.35 4.31L4.17 19.83l4.79-1.26c1.23.68 2.65 1.05 4.1.99 4.09 0 7.49-3.4 7.49-7.49 0-4.09-3.4-7.49-7.49-7.49zm2.4 12.87c-.12.2-.28.37-.48.47s-.42.15-.65.15c-.17 0-.34-.03-.5-.07-.15-.05-.29-.12-.42-.23-.13-.1-.23-.23-.32-.38s-.16-.31-.22-.49c-.06-.18-.08-.37-.08-.57 0-.17.03-.33.08-.49s.13-.3.23-.42c.1-.13.23-.24.38-.32.15-.09.31-.16.49-.22.18-.06.37-.08.57-.08h.08c.2 0 .4.04.59.13.19.09.37.21.51.36.15.15.27.32.36.51.09.19.13.4.13.59s-.04.4-.13.59c-.09.19-.21.37-.36.51s-.32.27-.51.36-.4.13-.59.13c-.2 0-.4-.04-.59-.13-.19-.09-.37-.21-.51-.36l-.36-.36z" /></svg>
+                        </a>
+                        <button class="delete-btn bg-red-500 text-white p-2 rounded-full shadow hover:bg-red-600 transition duration-200 ease-in-out" data-id="${driver.id}">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                              <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm6 0a1 1 0 011 1v5a1 1 0 11-2 0V9a1 1 0 011-1z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </div>
+                `;
+                driversList.appendChild(driverItem);
+            });
+        }
+        
+        // --- Event Listeners and Form Submissions ---
+        showAgendaBtn.addEventListener('click', () => showPage('agenda-page'));
+        showDriversBtn.addEventListener('click', () => showPage('drivers-page'));
+        showAddDriverModalBtn.addEventListener('click', () => showModal(driverModal));
+        closeModalBtn.addEventListener('click', () => hideModal(driverModal));
+        closeEditModalBtn.addEventListener('click', () => hideModal(editAppointmentModal));
+
+        appointmentForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const date = document.getElementById('appointment-date').value;
+            const clientName = document.getElementById('client-name').value;
+            const clientPhone = document.getElementById('client-phone').value;
+            const grassType = document.getElementById('grass-type').value;
+            const quantity = document.getElementById('quantity').value;
+            const deliveryLocation = document.getElementById('delivery-location').value;
+            const driverName = document.getElementById('driver-name').value;
+            const isPalletized = document.getElementById('is-palletized').checked;
+            const observations = document.getElementById('observations').value;
+            
+            const newAppointment = {
+                date,
+                clientName,
+                clientPhone,
+                grassType,
+                quantity,
+                deliveryLocation,
+                driverName,
+                isPalletized,
+                observations
+            };
+            
+            try {
+                await addDoc(appointmentsCollection(appId), newAppointment);
+                appointmentForm.reset();
+            } catch (e) {
+                console.error("Error adding document: ", e);
+            }
+        });
+
+        editAppointmentForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const docId = editAppointmentIdInput.value;
+            
+            const updatedAppointment = {
+                date: editAppointmentDateInput.value,
+                clientName: editClientNameInput.value,
+                clientPhone: editClientPhoneInput.value,
+                grassType: editGrassTypeSelect.value,
+                quantity: editQuantityInput.value,
+                deliveryLocation: editDeliveryLocationInput.value,
+                driverName: editDriverNameSelect.value,
+                isPalletized: editIsPalletizedInput.checked,
+                observations: editObservationsInput.value
+            };
+            
+            try {
+                await setDoc(doc(db, `artifacts/${appId}/public/data/appointments/${docId}`), updatedAppointment);
+                hideModal(editAppointmentModal);
+            } catch (e) {
+                console.error("Error updating document: ", e);
+            }
+        });
+
+        driverForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const name = document.getElementById('driver-name-reg').value;
+            const phone = document.getElementById('driver-phone').value;
+            const pix = document.getElementById('driver-pix').value;
+            
+            const newDriver = { name, phone, pix };
+            
+            try {
+                await addDoc(driversCollection(appId), newDriver);
+                driverForm.reset();
+                hideModal(driverModal);
+            } catch (e) {
+                console.error("Error adding document: ", e);
+            }
+        });
+
+        document.addEventListener('click', async (e) => {
+            if (e.target.closest('.delete-btn')) {
+                const btn = e.target.closest('.delete-btn');
+                const docId = btn.dataset.id;
+                
+                if (confirm('Tem certeza que deseja excluir este item?')) {
+                    try {
+                        const isDriver = btn.closest('#drivers-list');
+                        if (isDriver) {
+                            await deleteDoc(doc(db, `artifacts/${appId}/public/data/drivers/${docId}`));
+                        } else {
+                            await deleteDoc(doc(db, `artifacts/${appId}/public/data/appointments/${docId}`));
+                        }
+                    } catch (e) {
+                        console.error("Error removing document: ", e);
+                    }
+                }
+            }
+
+            if (e.target.closest('.edit-btn')) {
+                const btn = e.target.closest('.edit-btn');
+                const docId = btn.dataset.id;
+                
+                const appointment = allAppointments[Object.keys(allAppointments).find(date => allAppointments[date].some(a => a.id === docId))].find(a => a.id === docId);
+
+                if (appointment) {
+                    editAppointmentIdInput.value = docId;
+                    editAppointmentDateInput.value = appointment.date;
+                    editClientNameInput.value = appointment.clientName;
+                    editClientPhoneInput.value = appointment.clientPhone || '';
+                    editGrassTypeSelect.value = appointment.grassType;
+                    editQuantityInput.value = appointment.quantity;
+                    editDeliveryLocationInput.value = appointment.deliveryLocation;
+                    editDriverNameSelect.value = appointment.driverName;
+                    editIsPalletizedInput.checked = appointment.isPalletized;
+                    editObservationsInput.value = appointment.observations;
+                    showModal(editAppointmentModal);
+                }
+            }
+        });
+
+        filterBtn.addEventListener('click', () => {
+            const date = filterDateInput.value;
+            renderAppointments(date);
+        });
+
+        clearFilterBtn.addEventListener('click', () => {
+            filterDateInput.value = '';
+            renderAppointments();
+        });
+
+        // Initial setup
+        initFirebaseAndAuth();
+    </script>
+</body>
+</html>
